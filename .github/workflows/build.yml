@@ -174,12 +174,25 @@ jobs:
       #               1) <DOCKER_REPOSITORY>:latest (use: ${{ vars.DOCKER_REPOSITORY }})
       #               2) <DOCKER_REPOSITORY>:<PLUGIN_VERSION> (use: ${{ vars.DOCKER_REPOSITORY }} and ${{ inputs.plugin_version }})
 
-      - name: Build (and optionally push) Docker image
+      - name: Build Docker image (no push)
+        if: ${{ !inputs.push_image }}
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile
-          push: ${{ inputs.push_image }}
+          push: false
+          tags: ${{ steps.image_tags.outputs.latest }}
+          build-args: |
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            UV_VERSION=${{ inputs.uv_version }}
+
+      - name: Build and push Docker image
+        if: ${{ inputs.push_image }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             UV_VERSION=${{ inputs.uv_version }}

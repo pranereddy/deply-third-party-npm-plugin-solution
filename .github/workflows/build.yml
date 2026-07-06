@@ -193,6 +193,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             UV_VERSION=${{ inputs.uv_version }}

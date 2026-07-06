@@ -139,6 +139,28 @@ jobs:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
+      - name: Resolve image tags
+        id: image_tags
+        env:
+          IMAGE_REPO_VAR: ${{ vars.DOCKER_REPOSITORY }}
+          PLUGIN_VERSION: ${{ inputs.plugin_version }}
+        run: |
+          set -euo pipefail
+
+          image_repo="${IMAGE_REPO_VAR:-}"
+          if [[ -z "$image_repo" ]]; then
+            image_repo="depsight-npm-plugin"
+          fi
+
+          echo "latest=${image_repo}:latest" >> "$GITHUB_OUTPUT"
+          echo "version=${image_repo}:${PLUGIN_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Docker repository configuration
+        if: ${{ inputs.push_image && vars.DOCKER_REPOSITORY == '' }}
+        run: |
+          echo "::error::Repository variable DOCKER_REPOSITORY must be set when push_image=true"
+          exit 1
+
       # TODO: Build (and push) the Docker image
       # Use the 'docker/build-push-action@v6' action.
       # Configure it with:
@@ -162,5 +184,5 @@ jobs:
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             UV_VERSION=${{ inputs.uv_version }}
           tags: |
-            ${{ vars.DOCKER_REPOSITORY }}:latest
-            ${{ vars.DOCKER_REPOSITORY }}:${{ inputs.plugin_version }}
+            ${{ steps.image_tags.outputs.latest }}
+            ${{ steps.image_tags.outputs.version }}
